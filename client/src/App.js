@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './components/Home';
 import './App.css';
 import './styles/global.css';
+import PhastInputForm from './components/PhastInputForm';
 
 const App = () => {
   return (
@@ -10,6 +11,7 @@ const App = () => {
       <div>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/demo" element={<PhastInputForm />} />
         </Routes>
       </div>
     </Router>
