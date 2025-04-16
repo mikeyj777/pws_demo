@@ -16,37 +16,61 @@ const PhastInputForm = () => {
   const [showResults, setShowResults] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [chemicals, setChemicals] = useState([]);
+  const [allChemicals, setAllChemicals] = useState([]);
   const [selectedChemicals, setSelectedChemicals] = useState([
     { name: 'Methane', cas: '74-82-8', value: '45' },
     { name: 'Ethane', cas: '74-84-0', value: '30' },
     { name: 'Propane', cas: '74-98-6', value: '25' }
   ]);
   
-  // Mocked chemical data - in real app, fetch from CSV
-  const mockChemicals = [
-    { name: 'Methane', cas: '74-82-8' },
-    { name: 'Ethane', cas: '74-84-0' },
-    { name: 'Propane', cas: '74-98-6' },
-    { name: 'Butane', cas: '106-97-8' },
-    { name: 'Pentane', cas: '109-66-0' },
-    { name: 'Hexane', cas: '110-54-3' }
-  ];
-  
-  // Filter chemicals based on search term
+  // Fetch chemicals from CSV
   useEffect(() => {
-    if (searchTerm) {
-      const filtered = mockChemicals.filter(chem => 
-        chem.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        chem.cas.includes(searchTerm)
-      );
-      setChemicals(filtered);
-      setShowResults(filtered.length > 0);
-    } else {
-      setChemicals([]);
-      setShowResults(false);
+    const fetchChemicals = async () => {
+    try {
+      const response = await fetch('data/cheminfo.csv');
+      const text = await response.text();
+      
+      // Parse CSV
+      const rows = text.split('\n');
+      const headers = rows[0].split(',');
+      const nameIndex = headers.indexOf('chem_name');
+      const casIndex = headers.indexOf('cas_no');
+      
+      const chemicalList = rows.slice(1)
+        .map(row => {
+          const columns = row.split(',');
+          return {
+            name: columns[nameIndex]?.trim(),
+            cas: columns[casIndex]?.trim()
+          };
+        })
+        .filter(chem => chem.name && chem.cas); // Filter out rows with missing data
+      
+      setAllChemicals(chemicalList);
+    } catch (error) {
+      console.error('Error loading chemical data:', error);
     }
-  }, [searchTerm]);
+  };
   
+  fetchChemicals();
+}, []);
+
+// Filter chemicals based on search term
+useEffect(() => {
+  if (searchTerm && allChemicals.length > 0) {
+    const filtered = allChemicals.filter(chem => 
+      chem.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      chem.cas.includes(searchTerm)
+    ).slice(0, 8); // Limit to 8 results for better UX
+    
+    setChemicals(filtered);
+    setShowResults(filtered.length > 0);
+  } else {
+    setChemicals([]);
+    setShowResults(false);
+  }
+}, [searchTerm, allChemicals]);
+
   // Add a chemical to the selected list
   const addChemical = (chemical) => {
     if (!selectedChemicals.some(c => c.cas === chemical.cas)) {
