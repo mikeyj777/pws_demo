@@ -17,6 +17,65 @@ const PhastInputForm = () => {
   const [selectedChemicals, setSelectedChemicals] = useState([]);
   const [isMolarComposition, setIsMolarComposition] = useState(false);
   
+   // Create particle effect
+   useEffect(() => {
+    // Create the particles container if it doesn't exist
+    let particlesContainer = document.querySelector('.particles-container');
+    
+    if (!particlesContainer) {
+      particlesContainer = document.createElement('div');
+      particlesContainer.classList.add('particles-container');
+      
+      // Find the header element and append the particles container to it
+      const header = document.querySelector('.phast-header');
+      if (header) {
+        header.appendChild(particlesContainer);
+        
+        // Now create the particles
+        for (let i = 0; i < 50; i++) {
+          const particle = document.createElement('div');
+          particle.classList.add('particle');
+          
+          // Random size between 2px and 6px
+          const size = Math.random() * 4 + 2;
+          particle.style.width = `${size}px`;
+          particle.style.height = `${size}px`;
+          
+          // Random position
+          particle.style.left = `${Math.random() * 100}%`;
+          particle.style.top = `${Math.random() * 100}%`;
+          
+          // Random opacity
+          particle.style.opacity = Math.random() * 0.5;
+          
+          // Random animation
+          const duration = Math.random() * 20 + 10;
+          const delay = Math.random() * 5;
+          particle.style.animationDuration = `${duration}s`;
+          particle.style.animationDelay = `${delay}s`;
+          
+          particlesContainer.appendChild(particle);
+        }
+        
+        // Add a glow effect
+        const glowEffect = document.createElement('div');
+        glowEffect.classList.add('glow-effect');
+        header.appendChild(glowEffect);
+      }
+    }
+    
+    // Cleanup function
+    return () => {
+      if (particlesContainer && particlesContainer.parentNode) {
+        particlesContainer.parentNode.removeChild(particlesContainer);
+      }
+      const glowEffect = document.querySelector('.glow-effect');
+      if (glowEffect && glowEffect.parentNode) {
+        glowEffect.parentNode.removeChild(glowEffect);
+      }
+    };
+  }, []);
+
   // Fetch chemicals from CSV
   useEffect(() => {
     const fetchChemicals = async () => {
@@ -100,169 +159,192 @@ const PhastInputForm = () => {
   };
   
   return (
-    <div className="phast-form-container">
-      <h1>PHAST Model Input</h1>
-      
-      <div className="form-section">
-        <h2>Release Parameters</h2>
-        <div className="form-grid">
-          <div className="form-group">
-            <label htmlFor="pressure">Pressure (psig)</label>
-            <input
-              type="number"
-              id="pressure"
-              value={pressure}
-              onChange={(e) => setPressure(e.target.value)}
-              placeholder="Enter pressure"
-            />
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="temperature">Temperature (°F)</label>
-            <input
-              type="number"
-              id="temperature"
-              value={temperature}
-              onChange={(e) => setTemperature(e.target.value)}
-              placeholder="Enter temperature"
-            />
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="holeSize">Hole Size (in)</label>
-            <input
-              type="number"
-              id="holeSize"
-              value={holeSize}
-              onChange={(e) => setHoleSize(e.target.value)}
-              placeholder="Enter hole size"
-            />
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="releaseElevation">Release Elevation (ft)</label>
-            <input
-              type="number"
-              id="releaseElevation"
-              value={releaseElevation}
-              onChange={(e) => setReleaseElevation(e.target.value)}
-              placeholder="Enter release elevation"
-            />
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="poolConfinementArea">Pool Confinement Area (ft²)</label>
-            <input
-              type="number"
-              id="poolConfinementArea"
-              value={poolConfinementArea}
-              onChange={(e) => setPoolConfinementArea(e.target.value)}
-              placeholder="Enter pool confinement area"
-            />
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="releaseBasis">Release Basis</label>
-            <select
-              id="releaseBasis"
-              value={releaseBasis}
-              onChange={(e) => setReleaseBasis(e.target.value)}
-            >
-              <option value="mass">Mass</option>
-              <option value="volume">Volume</option>
-            </select>
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="releaseQuantity">
-              Release Quantity ({releaseBasis === 'mass' ? 'lbs' : 'gal'})
-            </label>
-            <input
-              type="number"
-              id="releaseQuantity"
-              value={releaseQuantity}
-              onChange={(e) => setReleaseQuantity(e.target.value)}
-              placeholder={`Enter quantity in ${releaseBasis === 'mass' ? 'lbs' : 'gal'}`}
-            />
-          </div>
-        </div>
-      </div>
-      
-      <div className="form-section">
-        <h2>Chemical Components</h2>
-        
-        <div className="composition-type">
-          <label>
-            <input
-              type="checkbox"
-              checked={isMolarComposition}
-              onChange={(e) => setIsMolarComposition(e.target.checked)}
-            />
-            Molar Composition
-          </label>
-        </div>
-        
-        <div className="chemical-search">
-          <label htmlFor="chemicalSearch">Add Chemical Component</label>
-          <input
-            type="text"
-            id="chemicalSearch"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by chemical name or CAS number"
-          />
-          
-          {filteredChemicals.length > 0 && (
-            <ul className="chemical-dropdown">
-              {filteredChemicals.map((chem) => (
-                <li key={chem.cas} onClick={() => addChemical(chem)}>
-                  {chem.name} (CAS: {chem.cas})
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-        
-        <div className="selected-chemicals">
-          {selectedChemicals.length > 0 ? (
-            <ul>
-              {selectedChemicals.map((chem) => (
-                <li key={chem.cas} className="chemical-item">
-                  <span className="chemical-name">{chem.name} (CAS: {chem.cas})</span>
-                  <div className="chemical-controls">
-                    <input
-                      type="number"
-                      value={chem.value}
-                      onChange={(e) => updateChemicalValue(chem.cas, e.target.value)}
-                      placeholder={`Enter ${isMolarComposition ? 'molar' : 'mass'} fraction`}
-                    />
-                    <button
-                      className="remove-chemical"
-                      onClick={() => removeChemical(chem.cas)}
-                      aria-label="Remove chemical"
-                    >
-                      <span className="remove-icon">×</span>
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="no-chemicals">
-              No chemicals added. Search and add chemicals to the mixture.
+    <div className="phast-container">
+      <header className="phast-header">
+        <div className="header-content">
+          <div className="logo-container">
+            <div className="logo">
+              <span>PH</span>
             </div>
-          )}
+          </div>
+          <h1 className="app-title">PHAST Web Application</h1>
+          <p className="app-subtitle">Process Hazard Analysis Simulation Tool</p>
+        </div>
+      </header>
+      
+      {/* Release Parameters Card */}
+      <div className="card">
+        <div className="card-header">
+          <div className="card-title">
+            <div className="card-icon">📊</div>
+            <span>Release Parameters</span>
+          </div>
+        </div>
+        <div className="card-body">
+          <div className="form-grid">
+            {/* Example form field */}
+            <div className="form-group">
+              <label className="form-label">Pressure</label>
+              <div className="form-control">
+                <input type="number" placeholder="0.0" />
+                <div className="unit-badge">psig</div>
+              </div>
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">Temperature</label>
+              <div className="form-control">
+                <input type="number" placeholder="0.0" />
+                <div className="unit-badge">°F</div>
+              </div>
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">Hole Size</label>
+              <div className="form-control">
+                <input type="number" placeholder="0.0" />
+                <div className="unit-badge">in</div>
+              </div>
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">Release Elevation</label>
+              <div className="form-control">
+                <input type="number" placeholder="0.0" />
+                <div className="unit-badge">ft</div>
+              </div>
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">Pool Confinement Area</label>
+              <div className="form-control">
+                <input type="number" placeholder="0.0" />
+                <div className="unit-badge">ft²</div>
+              </div>
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">Release Basis</label>
+              <div className="form-control select-wrapper">
+                <select>
+                  <option value="mass">Mass</option>
+                  <option value="volume">Volume</option>
+                </select>
+              </div>
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">Release Quantity</label>
+              <div className="form-control">
+                <input type="number" placeholder="0.0" />
+                <div className="unit-badge">lbs</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       
-      <div className="form-actions">
-        <button
-          className="run-model-btn"
-          onClick={handleRunModel}
-          disabled={selectedChemicals.length === 0}
-        >
-          Run Model
-        </button>
+      {/* Chemical Components Card */}
+      <div className="card">
+        <div className="card-header">
+          <div className="card-title">
+            <div className="card-icon">🧪</div>
+            <span>Chemical Components</span>
+          </div>
+          
+          <div className="composition-toggle">
+            <label className="toggle-label">
+              Molar Composition
+              <div className="toggle-switch">
+                <input type="checkbox" />
+                <span className="toggle-slider"></span>
+              </div>
+            </label>
+          </div>
+        </div>
+        <div className="card-body">
+          <div className="search-container">
+            <div className="search-input-wrapper">
+              <div className="search-icon">⌕</div>
+              <input
+                type="text"
+                className="search-input"
+                placeholder="Search chemical by name or CAS number"
+              />
+            </div>
+            
+            {/* Example Chemical Search Results */}
+            <div className="search-results" style={{ display: 'none' }}>
+              <div className="search-result-item">
+                <div className="result-primary">Methane</div>
+                <div className="result-secondary">CAS: 74-82-8</div>
+              </div>
+              <div className="search-result-item">
+                <div className="result-primary">Ethane</div>
+                <div className="result-secondary">CAS: 74-84-0</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="chemical-list">
+            {/* Example Chemical Item */}
+            <div className="chemical-item">
+              <div className="chemical-info">
+                <div className="chemical-name">Methane</div>
+                <div className="chemical-cas">CAS: 74-82-8</div>
+              </div>
+              <div className="chemical-controls">
+                <div className="value-control">
+                  <input type="number" placeholder="0.0" value="45" />
+                  <div className="value-badge">wt %</div>
+                </div>
+                <button className="remove-btn">×</button>
+              </div>
+            </div>
+            
+            <div className="chemical-item">
+              <div className="chemical-info">
+                <div className="chemical-name">Ethane</div>
+                <div className="chemical-cas">CAS: 74-84-0</div>
+              </div>
+              <div className="chemical-controls">
+                <div className="value-control">
+                  <input type="number" placeholder="0.0" value="30" />
+                  <div className="value-badge">wt %</div>
+                </div>
+                <button className="remove-btn">×</button>
+              </div>
+            </div>
+            
+            <div className="chemical-item">
+              <div className="chemical-info">
+                <div className="chemical-name">Propane</div>
+                <div className="chemical-cas">CAS: 74-98-6</div>
+              </div>
+              <div className="chemical-controls">
+                <div className="value-control">
+                  <input type="number" placeholder="0.0" value="25" />
+                  <div className="value-badge">wt %</div>
+                </div>
+                <button className="remove-btn">×</button>
+              </div>
+            </div>
+            
+            {/* Empty state (hidden when there are chemicals)
+            <div className="empty-state">
+              <div className="empty-icon">🧪</div>
+              <div className="empty-title">No chemicals added</div>
+              <div className="empty-description">
+                Use the search bar above to find and add chemicals to your mixture.
+              </div>
+            </div>
+            */}
+          </div>
+        </div>
+      </div>
+      
+      <div className="action-bar">
+        <button className="run-btn">Run Model</button>
       </div>
     </div>
   );
