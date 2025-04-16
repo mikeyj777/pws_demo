@@ -11,124 +11,52 @@ const PhastInputForm = () => {
   const [releaseQuantity, setReleaseQuantity] = useState('');
   
   // State for chemical components
-  const [chemicals, setChemicals] = useState([]);
-  const [filteredChemicals, setFilteredChemicals] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedChemicals, setSelectedChemicals] = useState([]);
   const [isMolarComposition, setIsMolarComposition] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showResults, setShowResults] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [chemicals, setChemicals] = useState([]);
+  const [selectedChemicals, setSelectedChemicals] = useState([
+    { name: 'Methane', cas: '74-82-8', value: '45' },
+    { name: 'Ethane', cas: '74-84-0', value: '30' },
+    { name: 'Propane', cas: '74-98-6', value: '25' }
+  ]);
   
-   // Create particle effect
-   useEffect(() => {
-    // Create the particles container if it doesn't exist
-    let particlesContainer = document.querySelector('.particles-container');
-    
-    if (!particlesContainer) {
-      particlesContainer = document.createElement('div');
-      particlesContainer.classList.add('particles-container');
-      
-      // Find the header element and append the particles container to it
-      const header = document.querySelector('.phast-header');
-      if (header) {
-        header.appendChild(particlesContainer);
-        
-        // Now create the particles
-        for (let i = 0; i < 50; i++) {
-          const particle = document.createElement('div');
-          particle.classList.add('particle');
-          
-          // Random size between 2px and 6px
-          const size = Math.random() * 4 + 2;
-          particle.style.width = `${size}px`;
-          particle.style.height = `${size}px`;
-          
-          // Random position
-          particle.style.left = `${Math.random() * 100}%`;
-          particle.style.top = `${Math.random() * 100}%`;
-          
-          // Random opacity
-          particle.style.opacity = Math.random() * 0.5;
-          
-          // Random animation
-          const duration = Math.random() * 20 + 10;
-          const delay = Math.random() * 5;
-          particle.style.animationDuration = `${duration}s`;
-          particle.style.animationDelay = `${delay}s`;
-          
-          particlesContainer.appendChild(particle);
-        }
-        
-        // Add a glow effect
-        const glowEffect = document.createElement('div');
-        glowEffect.classList.add('glow-effect');
-        header.appendChild(glowEffect);
-      }
-    }
-    
-    // Cleanup function
-    return () => {
-      if (particlesContainer && particlesContainer.parentNode) {
-        particlesContainer.parentNode.removeChild(particlesContainer);
-      }
-      const glowEffect = document.querySelector('.glow-effect');
-      if (glowEffect && glowEffect.parentNode) {
-        glowEffect.parentNode.removeChild(glowEffect);
-      }
-    };
-  }, []);
-
-  // Fetch chemicals from CSV
-  useEffect(() => {
-    const fetchChemicals = async () => {
-      try {
-        const response = await fetch('/data/cheminfo.csv');
-        const text = await response.text();
-        
-        // Parse CSV
-        const rows = text.split('\n');
-        const headers = rows[0].split(',');
-        const nameIndex = headers.indexOf('chemical_name');
-        const casIndex = headers.indexOf('cas_number');
-        
-        const chemicalList = rows.slice(1).map(row => {
-          const columns = row.split(',');
-          return {
-            name: columns[nameIndex],
-            cas: columns[casIndex]
-          };
-        }).filter(chem => chem.name && chem.cas);
-        
-        setChemicals(chemicalList);
-      } catch (error) {
-        console.error('Error loading chemical data:', error);
-      }
-    };
-    
-    fetchChemicals();
-  }, []);
+  // Mocked chemical data - in real app, fetch from CSV
+  const mockChemicals = [
+    { name: 'Methane', cas: '74-82-8' },
+    { name: 'Ethane', cas: '74-84-0' },
+    { name: 'Propane', cas: '74-98-6' },
+    { name: 'Butane', cas: '106-97-8' },
+    { name: 'Pentane', cas: '109-66-0' },
+    { name: 'Hexane', cas: '110-54-3' }
+  ];
   
   // Filter chemicals based on search term
   useEffect(() => {
     if (searchTerm) {
-      const filtered = chemicals.filter(chem => 
+      const filtered = mockChemicals.filter(chem => 
         chem.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         chem.cas.includes(searchTerm)
       );
-      setFilteredChemicals(filtered.slice(0, 8)); // Limit to 8 results
+      setChemicals(filtered);
+      setShowResults(filtered.length > 0);
     } else {
-      setFilteredChemicals([]);
+      setChemicals([]);
+      setShowResults(false);
     }
-  }, [searchTerm, chemicals]);
+  }, [searchTerm]);
   
-  // Add chemical to selected list
+  // Add a chemical to the selected list
   const addChemical = (chemical) => {
     if (!selectedChemicals.some(c => c.cas === chemical.cas)) {
       setSelectedChemicals([...selectedChemicals, { ...chemical, value: '' }]);
-      setSearchTerm('');
-      setFilteredChemicals([]);
     }
+    setSearchTerm('');
+    setShowResults(false);
   };
   
-  // Remove chemical from selected list
+  // Remove a chemical from the selected list
   const removeChemical = (cas) => {
     setSelectedChemicals(selectedChemicals.filter(c => c.cas !== cas));
   };
@@ -140,9 +68,10 @@ const PhastInputForm = () => {
     ));
   };
   
-  // Run model
+  // Handle form submission
   const handleRunModel = () => {
-    const formData = {
+    setIsSubmitting(true);
+    console.log('Running model with data:', {
       pressure,
       temperature,
       holeSize,
@@ -152,24 +81,23 @@ const PhastInputForm = () => {
       releaseQuantity,
       isMolarComposition,
       chemicals: selectedChemicals
-    };
+    });
     
-    console.log('Running model with data:', formData);
-    // Here you would send the data to your Flask backend
+    // Simulate API call
+    setTimeout(() => {
+      setIsSubmitting(false);
+      // Here you would send the data to your backend
+    }, 2000);
   };
-  
+
   return (
-    <div className="phast-container">
-      <header className="phast-header">
-        <div className="header-content">
-          <div className="logo-container">
-            <div className="logo">
-              <span>PH</span>
-            </div>
-          </div>
-          <h1 className="app-title">PHAST Web Application</h1>
-          <p className="app-subtitle">Process Hazard Analysis Simulation Tool</p>
+    <div className="phast-app">
+      <header className="app-header">
+        <div className="app-logo">
+          <div className="logo-inner">PH</div>
         </div>
+        <h1 className="app-title">PHAST Web Application</h1>
+        <p className="app-subtitle">Process Hazard Analysis Simulation Tool</p>
       </header>
       
       {/* Release Parameters Card */}
@@ -182,51 +110,84 @@ const PhastInputForm = () => {
         </div>
         <div className="card-body">
           <div className="form-grid">
-            {/* Example form field */}
             <div className="form-group">
-              <label className="form-label">Pressure</label>
+              <label className="form-label" htmlFor="pressure">Pressure</label>
               <div className="form-control">
-                <input type="number" placeholder="0.0" />
-                <div className="unit-badge">psig</div>
+                <input 
+                  type="number" 
+                  id="pressure"
+                  placeholder="0.0"
+                  value={pressure}
+                  onChange={(e) => setPressure(e.target.value)}
+                />
+                <span className="input-unit">psig</span>
               </div>
             </div>
             
             <div className="form-group">
-              <label className="form-label">Temperature</label>
+              <label className="form-label" htmlFor="temperature">Temperature</label>
               <div className="form-control">
-                <input type="number" placeholder="0.0" />
-                <div className="unit-badge">°F</div>
+                <input 
+                  type="number" 
+                  id="temperature"
+                  placeholder="0.0"
+                  value={temperature}
+                  onChange={(e) => setTemperature(e.target.value)}
+                />
+                <span className="input-unit">°F</span>
               </div>
             </div>
             
             <div className="form-group">
-              <label className="form-label">Hole Size</label>
+              <label className="form-label" htmlFor="holeSize">Hole Size</label>
               <div className="form-control">
-                <input type="number" placeholder="0.0" />
-                <div className="unit-badge">in</div>
+                <input 
+                  type="number" 
+                  id="holeSize"
+                  placeholder="0.0"
+                  value={holeSize}
+                  onChange={(e) => setHoleSize(e.target.value)}
+                />
+                <span className="input-unit">in</span>
               </div>
             </div>
             
             <div className="form-group">
-              <label className="form-label">Release Elevation</label>
+              <label className="form-label" htmlFor="releaseElevation">Release Elevation</label>
               <div className="form-control">
-                <input type="number" placeholder="0.0" />
-                <div className="unit-badge">ft</div>
+                <input 
+                  type="number" 
+                  id="releaseElevation"
+                  placeholder="0.0"
+                  value={releaseElevation}
+                  onChange={(e) => setReleaseElevation(e.target.value)}
+                />
+                <span className="input-unit">ft</span>
               </div>
             </div>
             
             <div className="form-group">
-              <label className="form-label">Pool Confinement Area</label>
+              <label className="form-label" htmlFor="poolConfinementArea">Pool Confinement Area</label>
               <div className="form-control">
-                <input type="number" placeholder="0.0" />
-                <div className="unit-badge">ft²</div>
+                <input 
+                  type="number" 
+                  id="poolConfinementArea"
+                  placeholder="0.0"
+                  value={poolConfinementArea}
+                  onChange={(e) => setPoolConfinementArea(e.target.value)}
+                />
+                <span className="input-unit">ft²</span>
               </div>
             </div>
             
             <div className="form-group">
-              <label className="form-label">Release Basis</label>
+              <label className="form-label" htmlFor="releaseBasis">Release Basis</label>
               <div className="form-control select-wrapper">
-                <select>
+                <select
+                  id="releaseBasis"
+                  value={releaseBasis}
+                  onChange={(e) => setReleaseBasis(e.target.value)}
+                >
                   <option value="mass">Mass</option>
                   <option value="volume">Volume</option>
                 </select>
@@ -234,10 +195,16 @@ const PhastInputForm = () => {
             </div>
             
             <div className="form-group">
-              <label className="form-label">Release Quantity</label>
+              <label className="form-label" htmlFor="releaseQuantity">Release Quantity</label>
               <div className="form-control">
-                <input type="number" placeholder="0.0" />
-                <div className="unit-badge">lbs</div>
+                <input 
+                  type="number" 
+                  id="releaseQuantity"
+                  placeholder="0.0"
+                  value={releaseQuantity}
+                  onChange={(e) => setReleaseQuantity(e.target.value)}
+                />
+                <span className="input-unit">{releaseBasis === 'mass' ? 'lbs' : 'gal'}</span>
               </div>
             </div>
           </div>
@@ -252,99 +219,101 @@ const PhastInputForm = () => {
             <span>Chemical Components</span>
           </div>
           
-          <div className="composition-toggle">
-            <label className="toggle-label">
-              Molar Composition
-              <div className="toggle-switch">
-                <input type="checkbox" />
-                <span className="toggle-slider"></span>
-              </div>
+          <div className="toggle-container">
+            <span className="toggle-label">Molar Composition</span>
+            <label className="toggle-switch">
+              <input 
+                type="checkbox"
+                checked={isMolarComposition}
+                onChange={(e) => setIsMolarComposition(e.target.checked)}
+              />
+              <span className="toggle-slider"></span>
             </label>
           </div>
         </div>
         <div className="card-body">
           <div className="search-container">
             <div className="search-input-wrapper">
-              <div className="search-icon">⌕</div>
+              <span className="search-icon">⌕</span>
               <input
                 type="text"
                 className="search-input"
                 placeholder="Search chemical by name or CAS number"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             
-            {/* Example Chemical Search Results */}
-            <div className="search-results" style={{ display: 'none' }}>
-              <div className="search-result-item">
-                <div className="result-primary">Methane</div>
-                <div className="result-secondary">CAS: 74-82-8</div>
+            {showResults && (
+              <div className="search-results">
+                {chemicals.map((chem) => (
+                  <div 
+                    key={chem.cas} 
+                    className="search-result-item"
+                    onClick={() => addChemical(chem)}
+                  >
+                    <div className="result-name">{chem.name}</div>
+                    <div className="result-cas">{chem.cas}</div>
+                  </div>
+                ))}
               </div>
-              <div className="search-result-item">
-                <div className="result-primary">Ethane</div>
-                <div className="result-secondary">CAS: 74-84-0</div>
-              </div>
-            </div>
+            )}
           </div>
           
           <div className="chemical-list">
-            {/* Example Chemical Item */}
-            <div className="chemical-item">
-              <div className="chemical-info">
-                <div className="chemical-name">Methane</div>
-                <div className="chemical-cas">CAS: 74-82-8</div>
-              </div>
-              <div className="chemical-controls">
-                <div className="value-control">
-                  <input type="number" placeholder="0.0" value="45" />
-                  <div className="value-badge">wt %</div>
+            {selectedChemicals.length > 0 ? (
+              selectedChemicals.map((chem) => (
+                <div key={chem.cas} className="chemical-item">
+                  <div className="chemical-info">
+                    <div className="chemical-name">{chem.name}</div>
+                    <div className="chemical-cas">CAS: {chem.cas}</div>
+                  </div>
+                  <div className="chemical-controls">
+                    <div className="value-input">
+                      <input 
+                        type="number" 
+                        placeholder="0.0" 
+                        value={chem.value}
+                        onChange={(e) => updateChemicalValue(chem.cas, e.target.value)}
+                      />
+                      <span className="value-unit">{isMolarComposition ? 'mol %' : 'wt %'}</span>
+                    </div>
+                    <button 
+                      className="remove-btn"
+                      onClick={() => removeChemical(chem.cas)}
+                      aria-label={`Remove ${chem.name}`}
+                    >×</button>
+                  </div>
                 </div>
-                <button className="remove-btn">×</button>
-              </div>
-            </div>
-            
-            <div className="chemical-item">
-              <div className="chemical-info">
-                <div className="chemical-name">Ethane</div>
-                <div className="chemical-cas">CAS: 74-84-0</div>
-              </div>
-              <div className="chemical-controls">
-                <div className="value-control">
-                  <input type="number" placeholder="0.0" value="30" />
-                  <div className="value-badge">wt %</div>
+              ))
+            ) : (
+              <div className="empty-state">
+                <div className="empty-icon">🧪</div>
+                <div className="empty-title">No chemicals added</div>
+                <div className="empty-description">
+                  Use the search bar above to find and add chemicals to your mixture.
                 </div>
-                <button className="remove-btn">×</button>
               </div>
-            </div>
-            
-            <div className="chemical-item">
-              <div className="chemical-info">
-                <div className="chemical-name">Propane</div>
-                <div className="chemical-cas">CAS: 74-98-6</div>
-              </div>
-              <div className="chemical-controls">
-                <div className="value-control">
-                  <input type="number" placeholder="0.0" value="25" />
-                  <div className="value-badge">wt %</div>
-                </div>
-                <button className="remove-btn">×</button>
-              </div>
-            </div>
-            
-            {/* Empty state (hidden when there are chemicals)
-            <div className="empty-state">
-              <div className="empty-icon">🧪</div>
-              <div className="empty-title">No chemicals added</div>
-              <div className="empty-description">
-                Use the search bar above to find and add chemicals to your mixture.
-              </div>
-            </div>
-            */}
+            )}
           </div>
         </div>
       </div>
       
-      <div className="action-bar">
-        <button className="run-btn">Run Model</button>
+      <div className="action-container">
+        <button 
+          className={`run-btn ${isSubmitting ? 'loading' : ''}`}
+          onClick={handleRunModel}
+          disabled={selectedChemicals.length === 0 || isSubmitting}
+        >
+          {isSubmitting ? (
+            <>
+              <span className="loading-indicator"></span>
+              Processing...
+            </>
+          ) : (
+            'Run Model'
+          )}
+        </button>
       </div>
     </div>
   );
